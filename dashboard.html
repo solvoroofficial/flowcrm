@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>FlowCRM – Dashboard</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .touch-target { min-height: 48px; min-width: 48px; }
+        .expand-transition { transition: all 0.2s ease; }
+        .customer-card { transition: all 0.2s; }
+        .modal-transition { animation: fadeScale 0.2s ease-out; }
+        @keyframes fadeScale { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div id="loading" class="fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center">
+        <div class="text-center"><i class="fas fa-spinner fa-pulse text-4xl text-indigo-500"></i><p class="mt-2 text-gray-600">Loading...</p></div>
+    </div>
+
+    <div id="app" class="hidden fade-in">
+        <!-- Header with Logo -->
+        <nav class="bg-white/80 backdrop-blur-md sticky top-0 z-20 shadow-sm border-b border-gray-100">
+            <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <img src="logo.png" alt="Logo" class="h-10 w-10 rounded-full shadow-sm" onerror="this.src='https://via.placeholder.com/40?text=📋'">
+                    <h1 class="text-xl md:text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">FlowCRM</h1>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="settingsCog" class="text-gray-500 hover:text-indigo-600 p-2 rounded-full transition touch-target"><i class="fas fa-sliders-h text-xl"></i></button>
+                    <button id="logoutBtn" class="bg-red-50 text-red-600 hover:bg-red-100 px-4 py-2 rounded-full text-sm font-medium transition touch-target">Logout</button>
+                </div>
+            </div>
+        </nav>
+
+        <main class="max-w-7xl mx-auto px-4 py-6 md:py-8">
+            <!-- Dashboard Stats Cards (compact) -->
+            <div id="dashboardCards" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6"></div>
+
+            <!-- Add Customer Card -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-8 card-hover">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <i class="fas fa-user-plus text-indigo-500"></i> Add New Customer
+                </h2>
+                <form id="addCustomerForm" class="space-y-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <input type="text" id="custName" placeholder="Full name *" class="border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 outline-none transition touch-target">
+                        <input type="tel" id="custPhone" placeholder="Phone number *" class="border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 outline-none transition touch-target">
+                        <select id="custNeed" class="border border-gray-200 rounded-xl p-3 bg-white focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 outline-none touch-target">
+                            <option value="Website">🌐 Website</option>
+                            <option value="SEO">📈 SEO</option>
+                            <option value="Social Media">📱 Social Media</option>
+                            <option value="Email Marketing">📧 Email Marketing</option>
+                            <option value="CRM Setup">⚙️ CRM Setup</option>
+                        </select>
+                        <select id="custStatus" class="border border-gray-200 rounded-xl p-3 bg-white focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 outline-none touch-target">
+                            <option value="New">✨ New</option>
+                            <option value="Message Sent">📨 Message Sent</option>
+                            <option value="Follow-up Needed">⏰ Follow-up Needed</option>
+                            <option value="Replied">💬 Replied</option>
+                            <option value="Won">🏆 Won</option>
+                            <option value="Lost">😔 Lost</option>
+                            <option value="Removed">🗑️ Removed</option>
+                        </select>
+                    </div>
+                    <input type="text" id="custNotes" placeholder="Notes (optional)" class="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 outline-none transition touch-target">
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl transition transform hover:scale-[1.01] active:scale-[0.99] touch-target">➕ Save Customer</button>
+                </form>
+            </div>
+
+            <!-- Search & Filters Row -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6 flex flex-wrap gap-2 overflow-x-auto">
+                <div class="flex-1 min-w-[180px]">
+                    <input type="text" id="searchInput" placeholder="🔍 Search by name or phone" class="w-full border border-gray-200 rounded-xl p-2.5 focus:ring-2 focus:ring-indigo-200 outline-none touch-target">
+                </div>
+                <select id="statusFilter" class="border border-gray-200 rounded-xl p-2.5 bg-white touch-target">
+                    <option value="">All Status</option>
+                    <option value="New">New</option>
+                    <option value="Message Sent">Message Sent</option>
+                    <option value="Follow-up Needed">Follow-up Needed</option>
+                    <option value="Replied">Replied</option>
+                    <option value="Won">Won</option>
+                    <option value="Lost">Lost</option>
+                    <option value="Removed">Removed</option>
+                </select>
+                <select id="followupFilter" class="border border-gray-200 rounded-xl p-2.5 bg-white touch-target">
+                    <option value="">All Follow-ups</option>
+                    <option value="today">📅 Due Today</option>
+                    <option value="overdue">⚠️ Overdue</option>
+                    <option value="upcoming">⏳ Upcoming</option>
+                </select>
+                <select id="sortSelect" class="border border-gray-200 rounded-xl p-2.5 bg-white touch-target">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="pending">Pending Follow-up</option>
+                </select>
+            </div>
+
+            <!-- Expandable Customer List -->
+            <div id="customerList" class="space-y-3"></div>
+        </main>
+    </div>
+
+    <!-- Modals (unchanged, but we keep them) -->
+    <div id="settingsModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-2xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto modal-transition">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h2 class="text-xl font-bold">✨ Customize Your Experience</h2>
+                <button id="closeSettings" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <div class="mt-4">
+                <label class="block font-medium mb-1">Business Name</label>
+                <input type="text" id="businessNameInput" class="w-full border border-gray-200 rounded-xl p-3 mb-4 focus:ring-2 focus:ring-indigo-200 outline-none">
+            </div>
+            <div id="templateEditor" class="space-y-3"></div>
+            <button id="saveSettingsBtn" class="mt-4 w-full bg-indigo-600 text-white py-3 rounded-xl font-medium hover:bg-indigo-700 transition">💾 Save Settings</button>
+        </div>
+    </div>
+
+    <div id="messageModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-2xl w-full max-w-lg p-5 modal-transition">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-lg font-bold">✉️ Compose Message</h3>
+                <button id="closeMessage" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <select id="templateSelect" class="w-full border border-gray-200 rounded-xl p-3 mb-3 bg-white focus:ring-2 focus:ring-indigo-200"></select>
+            <textarea id="messagePreview" rows="4" class="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-indigo-200 outline-none"></textarea>
+            <div class="flex gap-3 mt-4">
+                <button id="copyMsgBtn" class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl hover:bg-gray-200 transition touch-target"><i class="far fa-copy mr-1"></i> Copy</button>
+                <button id="whatsappMsgBtn" class="flex-1 bg-green-100 text-green-700 py-3 rounded-xl hover:bg-green-200 transition touch-target"><i class="fab fa-whatsapp mr-1"></i> WhatsApp</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="followupModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-2xl w-full max-w-md p-5 modal-transition">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="font-bold">📅 Set Follow-up Reminder</h3>
+                <button id="closeFollowup" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <input type="datetime-local" id="followupDate" class="w-full border border-gray-200 rounded-xl p-3 my-3 focus:ring-2 focus:ring-indigo-200">
+            <button id="saveFollowupBtn" class="w-full bg-indigo-600 text-white py-3 rounded-xl hover:bg-indigo-700 transition">Save Reminder</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, getDocs, query, where, Timestamp, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBvKUs3fwQaV5WAHWMwWjwCk5jdtRIOKm4",
+            authDomain: "whatsapps-followup.firebaseapp.com",
+            projectId: "whatsapps-followup",
+            storageBucket: "whatsapps-followup.firebasestorage.app",
+            messagingSenderId: "407903812188",
+            appId: "1:407903812188:web:5e3823ad4a132cec3d8499",
+            measurementId: "G-0V8RJD0BM2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let currentUser = null;
+        let allCustomers = [];
+        let userSettings = { businessName: "MyBusiness", templates: {} };
+        let selectedCustomerId = null;
+
+        // DOM elements
+        const appContainer = document.getElementById('app');
+        const loadingDiv = document.getElementById('loading');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const customerListDiv = document.getElementById('customerList');
+        const dashboardCards = document.getElementById('dashboardCards');
+        const addCustomerForm = document.getElementById('addCustomerForm');
+        const searchInput = document.getElementById('searchInput');
+        const statusFilter = document.getElementById('statusFilter');
+        const followupFilter = document.getElementById('followupFilter');
+        const sortSelect = document.getElementById('sortSelect');
+        const settingsModal = document.getElementById('settingsModal');
+        const templateEditor = document.getElementById('templateEditor');
+        const businessNameInput = document.getElementById('businessNameInput');
+        const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+        const messageModal = document.getElementById('messageModal');
+        const messagePreview = document.getElementById('messagePreview');
+        const templateSelect = document.getElementById('templateSelect');
+        const copyMsgBtn = document.getElementById('copyMsgBtn');
+        const whatsappMsgBtn = document.getElementById('whatsappMsgBtn');
+        const followupModal = document.getElementById('followupModal');
+        const followupDateInput = document.getElementById('followupDate');
+        const saveFollowupBtn = document.getElementById('saveFollowupBtn');
+
+        const DEFAULT_TEMPLATES = {
+            first_contact: "Hi {{customerName}}, I noticed you might need {{needType}}. We at {{businessName}} can help you with that! Let me know if you'd like more info.",
+            follow_up: "Hi {{customerName}}, just following up regarding {{needType}}. Still interested? Happy to help!",
+            reminder: "Reminder: {{customerName}}, we discussed {{needType}}. Let's connect soon!",
+            reply_confirmation: "Thanks {{customerName}}! Glad to hear from you. We'll move forward with {{needType}}.",
+            cancellation: "Hi {{customerName}}, sorry to hear you're not interested in {{needType}}. If anything changes, feel free to reach out."
+        };
+
+        // ---------- Helper functions ----------
+        async function loadUserSettings(userId) {
+            const settingsRef = doc(db, "userSettings", userId);
+            const snap = await getDoc(settingsRef);
+            if (snap.exists()) {
+                userSettings = snap.data();
+            } else {
+                userSettings = { businessName: "MyBusiness", templates: DEFAULT_TEMPLATES };
+                await setDoc(settingsRef, userSettings);
+            }
+            businessNameInput.value = userSettings.businessName;
+            renderTemplateEditor();
+        }
+
+        async function saveUserSettings() {
+            if (!currentUser) return;
+            const newBusinessName = businessNameInput.value.trim() || "MyBusiness";
+            const templates = {};
+            document.querySelectorAll('.template-edit').forEach(textarea => {
+                const key = textarea.dataset.templateKey;
+                templates[key] = textarea.value;
+            });
+            userSettings.businessName = newBusinessName;
+            userSettings.templates = templates;
+            const settingsRef = doc(db, "userSettings", currentUser.uid);
+            await setDoc(settingsRef, userSettings);
+            alert("Settings saved!");
+            renderTemplateEditor();
+        }
+
+        function renderTemplateEditor() {
+            templateEditor.innerHTML = '';
+            const templateKeys = Object.keys(userSettings.templates || DEFAULT_TEMPLATES);
+            templateKeys.forEach(key => {
+                const div = document.createElement('div');
+                div.className = 'mb-3';
+                const label = document.createElement('label');
+                label.className = 'block text-sm font-medium text-gray-700 capitalize mb-1';
+                label.innerText = key.replace(/_/g, ' ');
+                const textarea = document.createElement('textarea');
+                textarea.rows = 2;
+                textarea.className = 'w-full border border-gray-200 rounded-xl p-2 text-sm focus:ring-2 focus:ring-indigo-200 outline-none';
+                textarea.value = userSettings.templates[key] || DEFAULT_TEMPLATES[key] || '';
+                textarea.dataset.templateKey = key;
+                textarea.classList.add('template-edit');
+                div.appendChild(label);
+                div.appendChild(textarea);
+                templateEditor.appendChild(div);
+            });
+        }
+
+        async function fetchCustomers() {
+            if (!currentUser) return [];
+            const q = query(collection(db, "customers"), where("ownerId", "==", currentUser.uid));
+            const snap = await getDocs(q);
+            allCustomers = [];
+            snap.forEach(docSnap => {
+                allCustomers.push({ id: docSnap.id, ...docSnap.data() });
+            });
+            return allCustomers;
+        }
+
+        function computeStats(customers) {
+            const total = customers.length;
+            const messagesSent = customers.filter(c => c.status === "Message Sent" || (c.lastMessageAt)).length;
+            const today = new Date(); today.setHours(0,0,0,0);
+            const dueToday = customers.filter(c => {
+                if (!c.nextFollowUpAt) return false;
+                const followDate = c.nextFollowUpAt.toDate ? c.nextFollowUpAt.toDate() : new Date(c.nextFollowUpAt);
+                followDate.setHours(0,0,0,0);
+                return followDate.getTime() === today.getTime() && c.status !== "Removed" && c.status !== "Lost" && c.status !== "Won";
+            }).length;
+            const replied = customers.filter(c => c.status === "Replied").length;
+            const cancelled = customers.filter(c => c.status === "Lost" || c.status === "Removed").length;
+            return { total, messagesSent, dueToday, replied, cancelled };
+        }
+
+        function renderDashboard(customers) {
+            const stats = computeStats(customers);
+            dashboardCards.innerHTML = `
+                <div class="bg-white rounded-xl shadow-sm p-3 border-l-4 border-indigo-400"><div class="text-xl font-bold">${stats.total}</div><div class="text-xs text-gray-500">Total</div></div>
+                <div class="bg-white rounded-xl shadow-sm p-3 border-l-4 border-emerald-400"><div class="text-xl font-bold">${stats.messagesSent}</div><div class="text-xs text-gray-500">Sent</div></div>
+                <div class="bg-white rounded-xl shadow-sm p-3 border-l-4 border-amber-400"><div class="text-xl font-bold">${stats.dueToday}</div><div class="text-xs text-gray-500">Due today</div></div>
+                <div class="bg-white rounded-xl shadow-sm p-3 border-l-4 border-purple-400"><div class="text-xl font-bold">${stats.replied}</div><div class="text-xs text-gray-500">Replied</div></div>
+                <div class="bg-white rounded-xl shadow-sm p-3 border-l-4 border-rose-400"><div class="text-xl font-bold">${stats.cancelled}</div><div class="text-xs text-gray-500">Lost/Removed</div></div>
+            `;
+        }
+
+        function filterAndSortCustomers() {
+            let filtered = [...allCustomers];
+            const searchTerm = searchInput.value.toLowerCase();
+            if (searchTerm) filtered = filtered.filter(c => c.name?.toLowerCase().includes(searchTerm) || c.phone?.includes(searchTerm));
+            const statusVal = statusFilter.value;
+            if (statusVal) filtered = filtered.filter(c => c.status === statusVal);
+            const followVal = followupFilter.value;
+            if (followVal === "today") {
+                const today = new Date(); today.setHours(0,0,0,0);
+                filtered = filtered.filter(c => {
+                    if (!c.nextFollowUpAt) return false;
+                    const fd = c.nextFollowUpAt.toDate ? c.nextFollowUpAt.toDate() : new Date(c.nextFollowUpAt);
+                    fd.setHours(0,0,0,0);
+                    return fd.getTime() === today.getTime();
+                });
+            } else if (followVal === "overdue") {
+                const today = new Date(); today.setHours(0,0,0,0);
+                filtered = filtered.filter(c => {
+                    if (!c.nextFollowUpAt) return false;
+                    const fd = c.nextFollowUpAt.toDate ? c.nextFollowUpAt.toDate() : new Date(c.nextFollowUpAt);
+                    return fd < today && c.status !== "Removed" && c.status !== "Lost" && c.status !== "Won";
+                });
+            } else if (followVal === "upcoming") {
+                const today = new Date(); today.setHours(0,0,0,0);
+                filtered = filtered.filter(c => {
+                    if (!c.nextFollowUpAt) return false;
+                    const fd = c.nextFollowUpAt.toDate ? c.nextFollowUpAt.toDate() : new Date(c.nextFollowUpAt);
+                    return fd > today;
+                });
+            }
+            const sortBy = sortSelect.value;
+            if (sortBy === "newest") filtered.sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
+            else if (sortBy === "oldest") filtered.sort((a,b) => (a.createdAt?.seconds||0) - (b.createdAt?.seconds||0));
+            else if (sortBy === "pending") filtered.sort((a,b) => ((a.nextFollowUpAt?.seconds||Infinity) - (b.nextFollowUpAt?.seconds||Infinity)));
+            return filtered;
+        }
+
+        function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+
+        function formatDate(timestamp) {
+            if (!timestamp) return '—';
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            return date.toLocaleDateString();
+        }
+
+        function renderCustomerList() {
+            const filtered = filterAndSortCustomers();
+            if (filtered.length === 0) {
+                customerListDiv.innerHTML = '<div class="bg-white rounded-xl p-8 text-center text-gray-400">✨ No customers yet. Add your first customer above!</div>';
+                renderDashboard(allCustomers);
+                return;
+            }
+
+            customerListDiv.innerHTML = filtered.map(cust => {
+                const statusBadgeClass = {
+                    'New': 'bg-gray-100 text-gray-700',
+                    'Message Sent': 'bg-blue-100 text-blue-700',
+                    'Follow-up Needed': 'bg-yellow-100 text-yellow-700',
+                    'Replied': 'bg-green-100 text-green-700',
+                    'Won': 'bg-emerald-100 text-emerald-700',
+                    'Lost': 'bg-red-100 text-red-700',
+                    'Removed': 'bg-gray-100 text-gray-500'
+                }[cust.status] || 'bg-gray-100';
+
+                const lastContact = cust.lastMessageAt ? (cust.lastMessageAt.toDate ? cust.lastMessageAt.toDate().toLocaleString() : new Date(cust.lastMessageAt).toLocaleString()) : '—';
+                const nextFollow = cust.nextFollowUpAt ? formatDate(cust.nextFollowUpAt) : '—';
+
+                return `
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <!-- Compact header -->
+                        <div class="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition" onclick="toggleExpand('${cust.id}')">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-semibold text-gray-800">${escapeHtml(cust.name)}</span>
+                                    <span class="text-xs px-2 py-0.5 rounded-full ${statusBadgeClass}">${cust.status}</span>
+                                </div>
+                                <div class="text-sm text-gray-500 mt-0.5">${escapeHtml(cust.phone)}</div>
+                                <div class="text-xs text-gray-400 mt-1">📅 Next: ${nextFollow}</div>
+                            </div>
+                            <i class="fas fa-chevron-down text-gray-400 transition-transform duration-200" id="chevron-${cust.id}"></i>
+                        </div>
+                        <!-- Expandable detail section (hidden by default) -->
+                        <div id="expand-${cust.id}" class="hidden border-t border-gray-100 p-4 space-y-3 bg-gray-50">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                                <div><span class="font-medium">Need:</span> ${escapeHtml(cust.needType || '—')}</div>
+                                <div><span class="font-medium">Last contact:</span> ${lastContact}</div>
+                                <div class="sm:col-span-2"><span class="font-medium">Notes:</span> ${escapeHtml(cust.notes || '—')}</div>
+                            </div>
+                            <div class="flex flex-wrap gap-2 pt-2">
+                                <button class="bg-indigo-50 text-indigo-600 px-3 py-2 rounded-full text-sm hover:bg-indigo-100 transition touch-target" onclick="window.openMessageModal('${cust.id}')"><i class="fas fa-comment-dots mr-1"></i> Message</button>
+                                <button class="bg-orange-50 text-orange-600 px-3 py-2 rounded-full text-sm hover:bg-orange-100 transition touch-target" onclick="window.openFollowupModal('${cust.id}', '${cust.nextFollowUpAt ? (cust.nextFollowUpAt.toDate ? cust.nextFollowUpAt.toDate().toISOString().slice(0,16) : '') : ''}')"><i class="fas fa-calendar-alt mr-1"></i> Follow-up</button>
+                                <button class="bg-purple-50 text-purple-600 px-3 py-2 rounded-full text-sm hover:bg-purple-100 transition touch-target" onclick="window.markStatus('${cust.id}', 'Replied')"><i class="fas fa-reply-all mr-1"></i> Replied</button>
+                                <button class="bg-emerald-50 text-emerald-600 px-3 py-2 rounded-full text-sm hover:bg-emerald-100 transition touch-target" onclick="window.markStatus('${cust.id}', 'Won')"><i class="fas fa-trophy mr-1"></i> Won</button>
+                                <button class="bg-red-50 text-red-600 px-3 py-2 rounded-full text-sm hover:bg-red-100 transition touch-target" onclick="window.markStatus('${cust.id}', 'Lost')"><i class="fas fa-ban mr-1"></i> Lost</button>
+                                <button class="bg-gray-50 text-gray-600 px-3 py-2 rounded-full text-sm hover:bg-gray-100 transition touch-target" onclick="window.markStatus('${cust.id}', 'Removed')"><i class="fas fa-trash-alt mr-1"></i> Remove</button>
+                                <button class="bg-rose-50 text-rose-600 px-3 py-2 rounded-full text-sm hover:bg-rose-100 transition touch-target" onclick="window.editCustomer('${cust.id}')"><i class="fas fa-edit mr-1"></i> Edit</button>
+                                <button class="bg-red-100 text-red-700 px-3 py-2 rounded-full text-sm hover:bg-red-200 transition touch-target" onclick="window.permanentDelete('${cust.id}')"><i class="fas fa-skull-crossbones mr-1"></i> Delete Permanently</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            renderDashboard(allCustomers);
+        }
+
+        // Toggle expand/collapse
+        window.toggleExpand = (id) => {
+            const expandDiv = document.getElementById(`expand-${id}`);
+            const chevron = document.getElementById(`chevron-${id}`);
+            if (expandDiv.classList.contains('hidden')) {
+                expandDiv.classList.remove('hidden');
+                chevron.classList.add('fa-chevron-up');
+                chevron.classList.remove('fa-chevron-down');
+            } else {
+                expandDiv.classList.add('hidden');
+                chevron.classList.add('fa-chevron-down');
+                chevron.classList.remove('fa-chevron-up');
+            }
+        };
+
+        // CRUD functions
+        async function addCustomer(event) {
+            event.preventDefault();
+            if(!currentUser) return;
+            const name = document.getElementById('custName').value.trim();
+            const phone = document.getElementById('custPhone').value.trim();
+            const needType = document.getElementById('custNeed').value;
+            const notes = document.getElementById('custNotes').value;
+            const status = document.getElementById('custStatus').value;
+            if(!name || !phone) { alert("Name and Phone are required"); return; }
+            const newCustomer = {
+                name, phone, needType, notes, status,
+                ownerId: currentUser.uid,
+                createdAt: Timestamp.now(),
+                updatedAt: Timestamp.now(),
+                lastMessageAt: null,
+                nextFollowUpAt: null,
+                messageTemplateUsed: null,
+                deletedOrRemovedFlag: status === "Removed"
+            };
+            await addDoc(collection(db, "customers"), newCustomer);
+            document.getElementById('addCustomerForm').reset();
+            await refreshUI();
+        }
+
+        async function editCustomerById(id) {
+            const cust = allCustomers.find(c => c.id === id);
+            if(!cust) return;
+            const newName = prompt("Edit name:", cust.name);
+            if(newName !== null) {
+                const newPhone = prompt("Edit phone:", cust.phone);
+                const newNeed = prompt("Edit need type:", cust.needType);
+                const newNotes = prompt("Edit notes:", cust.notes);
+                await updateDoc(doc(db, "customers", id), {
+                    name: newName || cust.name,
+                    phone: newPhone || cust.phone,
+                    needType: newNeed || cust.needType,
+                    notes: newNotes || cust.notes,
+                    updatedAt: Timestamp.now()
+                });
+                await refreshUI();
+            }
+        }
+
+        async function markStatus(id, newStatus) {
+            const validStatuses = ["New", "Message Sent", "Follow-up Needed", "Replied", "Won", "Lost", "Removed"];
+            if(!validStatuses.includes(newStatus)) return;
+            await updateDoc(doc(db, "customers", id), { status: newStatus, updatedAt: Timestamp.now() });
+            await refreshUI();
+        }
+
+        async function permanentDelete(id) {
+            if(confirm("⚠️ Permanent Delete: This action cannot be undone. Delete customer and all logs?")) {
+                await deleteDoc(doc(db, "customers", id));
+                await refreshUI();
+            }
+        }
+
+        async function setFollowup(id, followupDateISO) {
+            if(!followupDateISO) return;
+            const followTimestamp = Timestamp.fromDate(new Date(followupDateISO));
+            await updateDoc(doc(db, "customers", id), { nextFollowUpAt: followTimestamp, updatedAt: Timestamp.now(), status: "Follow-up Needed" });
+            await addDoc(collection(db, "followUps"), { customerId: id, followUpDate: followTimestamp, followUpStatus: "pending", notes: "", ownerId: currentUser.uid, createdAt: Timestamp.now() });
+            await refreshUI();
+        }
+
+        async function logMessage(customerId, messageText, channel) {
+            await addDoc(collection(db, "messageLogs"), {
+                customerId, messageText, sentAt: Timestamp.now(), channel,
+                ownerId: currentUser.uid
+            });
+            await updateDoc(doc(db, "customers", customerId), { lastMessageAt: Timestamp.now(), updatedAt: Timestamp.now(), status: "Message Sent" });
+        }
+
+        function getMessageFromTemplate(cust, templateKey) {
+            let templateText = (userSettings.templates && userSettings.templates[templateKey]) || DEFAULT_TEMPLATES[templateKey] || "Hello {{customerName}}, regarding {{needType}}.";
+            return templateText
+                .replace(/{{customerName}}/g, cust.name)
+                .replace(/{{needType}}/g, cust.needType || "our services")
+                .replace(/{{businessName}}/g, userSettings.businessName);
+        }
+
+        async function openMessageModal(custId) {
+            const cust = allCustomers.find(c => c.id === custId);
+            if(!cust) return;
+            selectedCustomerId = custId;
+            const templateKeys = Object.keys(userSettings.templates || DEFAULT_TEMPLATES);
+            templateSelect.innerHTML = templateKeys.map(key => `<option value="${key}">${key.replace(/_/g, ' ').toUpperCase()}</option>`).join('');
+            templateSelect.onchange = () => {
+                const msg = getMessageFromTemplate(cust, templateSelect.value);
+                messagePreview.value = msg;
+            };
+            const firstMsg = getMessageFromTemplate(cust, templateSelect.value);
+            messagePreview.value = firstMsg;
+            messageModal.classList.remove('hidden');
+        }
+
+        async function sendMessageAction(channelType) {
+            if(!selectedCustomerId) return;
+            const cust = allCustomers.find(c => c.id === selectedCustomerId);
+            const finalMessage = messagePreview.value;
+            if(!finalMessage) return;
+            if(channelType === 'copy') {
+                await navigator.clipboard.writeText(finalMessage);
+                alert("Message copied to clipboard!");
+                await logMessage(selectedCustomerId, finalMessage, "Copy");
+            } else if(channelType === 'whatsapp') {
+                let phone = cust.phone.replace(/\D/g, '');
+                if(!phone.startsWith('+')) phone = '91' + phone;
+                const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(finalMessage)}`;
+                window.open(waUrl, '_blank');
+                await logMessage(selectedCustomerId, finalMessage, "WhatsApp");
+            }
+            await updateDoc(doc(db, "customers", selectedCustomerId), { messageTemplateUsed: templateSelect.value });
+            await refreshUI();
+            messageModal.classList.add('hidden');
+        }
+
+        function openFollowupModal(custId, currentDate) {
+            selectedCustomerId = custId;
+            if(currentDate) {
+                let val = currentDate;
+                if(val.includes('T')) val = val.slice(0,16);
+                followupDateInput.value = val;
+            } else {
+                const now = new Date();
+                now.setDate(now.getDate() + 1);
+                followupDateInput.value = now.toISOString().slice(0,16);
+            }
+            followupModal.classList.remove('hidden');
+        }
+
+        async function saveFollowup() {
+            const dateValue = followupDateInput.value;
+            if(!dateValue) return;
+            await setFollowup(selectedCustomerId, dateValue);
+            followupModal.classList.add('hidden');
+        }
+
+        async function refreshUI() {
+            await fetchCustomers();
+            renderCustomerList();
+        }
+
+        async function logout() {
+            await signOut(auth);
+            window.location.href = 'login.html';
+        }
+
+        // Event listeners
+        addCustomerForm.addEventListener('submit', addCustomer);
+        logoutBtn.addEventListener('click', logout);
+        saveSettingsBtn.addEventListener('click', saveUserSettings);
+        copyMsgBtn.addEventListener('click', () => sendMessageAction('copy'));
+        whatsappMsgBtn.addEventListener('click', () => sendMessageAction('whatsapp'));
+        saveFollowupBtn.addEventListener('click', saveFollowup);
+        document.getElementById('closeSettings').addEventListener('click', () => settingsModal.classList.add('hidden'));
+        document.getElementById('closeMessage').addEventListener('click', () => messageModal.classList.add('hidden'));
+        document.getElementById('closeFollowup').addEventListener('click', () => followupModal.classList.add('hidden'));
+        document.getElementById('settingsCog').addEventListener('click', () => { renderTemplateEditor(); settingsModal.classList.remove('hidden'); });
+        searchInput.addEventListener('input', renderCustomerList);
+        statusFilter.addEventListener('change', renderCustomerList);
+        followupFilter.addEventListener('change', renderCustomerList);
+        sortSelect.addEventListener('change', renderCustomerList);
+
+        window.editCustomer = editCustomerById;
+        window.openMessageModal = openMessageModal;
+        window.openFollowupModal = openFollowupModal;
+        window.markStatus = markStatus;
+        window.permanentDelete = permanentDelete;
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                await loadUserSettings(user.uid);
+                await fetchCustomers();
+                renderCustomerList();
+                loadingDiv.classList.add('hidden');
+                appContainer.classList.remove('hidden');
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>FlowCRM – Sign In</title>
+    <!-- Favicon (replace with your own) -->
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Custom smooth transitions */
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .touch-target {
+            min-height: 48px;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-50 to-blue-100 min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md fade-in">
+        <!-- Logo + Brand -->
+        <div class="text-center mb-6">
+            <img src="logo.png" alt="FlowCRM Logo" class="h-16 w-auto mx-auto mb-3 rounded-full shadow-sm" onerror="this.src='https://via.placeholder.com/64?text=📋'">
+            <h1 class="text-3xl font-bold text-gray-800">FlowCRM</h1>
+            <p class="text-gray-500 text-sm mt-1">Customer Follow-up Manager</p>
+        </div>
+
+        <!-- Card -->
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6">
+            <!-- Tabs -->
+            <div class="flex border-b border-gray-200 mb-6">
+                <button id="loginTabBtn" class="flex-1 py-2 text-indigo-600 font-semibold border-b-2 border-indigo-600 transition-all">Sign In</button>
+                <button id="signupTabBtn" class="flex-1 py-2 text-gray-500 font-semibold transition-all">Create Account</button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="loginEmail" placeholder="hello@example.com" class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition touch-target">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="loginPassword" placeholder="••••••••" class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition touch-target">
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition transform hover:scale-[1.02] active:scale-[0.98] touch-target">Welcome back →</button>
+            </form>
+
+            <!-- Signup Form (hidden) -->
+            <form id="signupForm" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="signupEmail" placeholder="hello@example.com" class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition touch-target">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="signupPassword" placeholder="Create a strong password" class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition touch-target">
+                </div>
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl transition transform hover:scale-[1.02] active:scale-[0.98] touch-target">Start your journey →</button>
+            </form>
+
+            <p class="text-xs text-gray-400 text-center mt-6">🔐 Secured by Firebase</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        // Your Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBvKUs3fwQaV5WAHWMwWjwCk5jdtRIOKm4",
+            authDomain: "whatsapps-followup.firebaseapp.com",
+            projectId: "whatsapps-followup",
+            storageBucket: "whatsapps-followup.firebasestorage.app",
+            messagingSenderId: "407903812188",
+            appId: "1:407903812188:web:5e3823ad4a132cec3d8499",
+            measurementId: "G-0V8RJD0BM2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        const loginForm = document.getElementById('loginForm');
+        const signupForm = document.getElementById('signupForm');
+        const loginTab = document.getElementById('loginTabBtn');
+        const signupTab = document.getElementById('signupTabBtn');
+
+        loginTab.addEventListener('click', () => {
+            loginTab.classList.add('text-indigo-600', 'border-indigo-600');
+            loginTab.classList.remove('text-gray-500', 'border-transparent');
+            signupTab.classList.remove('text-indigo-600', 'border-indigo-600');
+            signupTab.classList.add('text-gray-500', 'border-transparent');
+            loginForm.classList.remove('hidden');
+            signupForm.classList.add('hidden');
+        });
+
+        signupTab.addEventListener('click', () => {
+            signupTab.classList.add('text-indigo-600', 'border-indigo-600');
+            signupTab.classList.remove('text-gray-500', 'border-transparent');
+            loginTab.classList.remove('text-indigo-600', 'border-indigo-600');
+            loginTab.classList.add('text-gray-500', 'border-transparent');
+            signupForm.classList.remove('hidden');
+            loginForm.classList.add('hidden');
+        });
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                window.location.href = 'dashboard.html';
+            } catch (error) {
+                alert('❌ ' + error.message);
+            }
+        });
+
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+                window.location.href = 'dashboard.html';
+            } catch (error) {
+                alert('❌ ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>
