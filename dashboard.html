@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>FlowCRM – Dashboard</title>
+    <title>FlowCRM – Smart Categories & Messaging</title>
     <link rel="icon" type="image/png" href="logo.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -26,11 +26,12 @@
     </div>
 
     <div id="app" class="hidden fade-in">
-        <!-- Header with Logo -->
+        <!-- Header with larger logo -->
         <nav class="bg-white/80 backdrop-blur-md sticky top-0 z-20 shadow-sm border-b border-gray-100">
             <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
                 <div class="flex items-center gap-3">
-                    <img src="logo.png" alt="Logo" class="h-10 w-10 rounded-full shadow-sm" onerror="this.src='https://via.placeholder.com/40?text=📋'">
+                    <!-- Logo size increased: h-14 w-14 for better visibility -->
+                    <img src="logo.png" alt="Unicorn CRM" class="h-14 w-14 rounded-full shadow-md object-cover border border-indigo-100" onerror="this.src='https://via.placeholder.com/56?text=🦄'">
                     <h1 class="text-xl md:text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">FlowCRM</h1>
                 </div>
                 <div class="flex items-center gap-2">
@@ -41,10 +42,10 @@
         </nav>
 
         <main class="max-w-7xl mx-auto px-4 py-6 md:py-8">
-            <!-- Dashboard Stats Cards (compact) -->
+            <!-- Dashboard Stats Cards -->
             <div id="dashboardCards" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6"></div>
 
-            <!-- Add Customer Card -->
+            <!-- Add Customer Card with CATEGORY option -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-8 card-hover">
                 <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
                     <i class="fas fa-user-plus text-indigo-500"></i> Add New Customer
@@ -60,6 +61,9 @@
                             <option value="Email Marketing">📧 Email Marketing</option>
                             <option value="CRM Setup">⚙️ CRM Setup</option>
                         </select>
+                        <select id="custCategory" class="border border-gray-200 rounded-xl p-3 bg-white focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 outline-none touch-target">
+                            <!-- dynamic categories will be injected here -->
+                        </select>
                         <select id="custStatus" class="border border-gray-200 rounded-xl p-3 bg-white focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 outline-none touch-target">
                             <option value="New">✨ New</option>
                             <option value="Message Sent">📨 Message Sent</option>
@@ -70,7 +74,7 @@
                             <option value="Removed">🗑️ Removed</option>
                         </select>
                     </div>
-                    <input type="text" id="custNotes" placeholder="Notes (optional)" class="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 outline-none transition touch-target">
+                    <input type="text" id="custNotes" placeholder="Notes (optional)" class="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-indigo-200 outline-none transition touch-target">
                     <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl transition transform hover:scale-[1.01] active:scale-[0.99] touch-target">➕ Save Customer</button>
                 </form>
             </div>
@@ -90,6 +94,9 @@
                     <option value="Lost">Lost</option>
                     <option value="Removed">Removed</option>
                 </select>
+                <select id="categoryFilter" class="border border-gray-200 rounded-xl p-2.5 bg-white touch-target">
+                    <option value="">All Categories</option>
+                </select>
                 <select id="followupFilter" class="border border-gray-200 rounded-xl p-2.5 bg-white touch-target">
                     <option value="">All Follow-ups</option>
                     <option value="today">📅 Due Today</option>
@@ -108,34 +115,76 @@
         </main>
     </div>
 
-    <!-- Modals (unchanged, but we keep them) -->
+    <!-- Settings Modal: Includes Category & Category Message Management -->
     <div id="settingsModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
-        <div class="bg-white rounded-2xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto modal-transition">
+        <div class="bg-white rounded-2xl w-full max-w-3xl p-6 max-h-[90vh] overflow-y-auto modal-transition">
             <div class="flex justify-between items-center border-b pb-3">
-                <h2 class="text-xl font-bold">✨ Customize Your Experience</h2>
+                <h2 class="text-xl font-bold">✨ Customize Experience + Category Messages</h2>
                 <button id="closeSettings" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
             </div>
             <div class="mt-4">
                 <label class="block font-medium mb-1">Business Name</label>
                 <input type="text" id="businessNameInput" class="w-full border border-gray-200 rounded-xl p-3 mb-4 focus:ring-2 focus:ring-indigo-200 outline-none">
             </div>
-            <div id="templateEditor" class="space-y-3"></div>
-            <button id="saveSettingsBtn" class="mt-4 w-full bg-indigo-600 text-white py-3 rounded-xl font-medium hover:bg-indigo-700 transition">💾 Save Settings</button>
+
+            <!-- Category Management Section -->
+            <div class="border-t pt-4 mt-2">
+                <h3 class="font-semibold text-gray-700 flex items-center gap-2"><i class="fas fa-tags text-indigo-500"></i> Manage Categories</h3>
+                <div class="flex flex-wrap gap-2 my-3" id="categoriesListContainer"></div>
+                <div class="flex gap-2 mt-2">
+                    <input type="text" id="newCategoryName" placeholder="New category name" class="border border-gray-200 rounded-xl p-2 flex-1">
+                    <button id="addCategoryBtn" class="bg-indigo-100 text-indigo-700 px-4 rounded-xl hover:bg-indigo-200 transition">+ Add</button>
+                </div>
+            </div>
+
+            <!-- Per-Category Message Templates Editor -->
+            <div class="border-t pt-4 mt-4">
+                <h3 class="font-semibold text-gray-700 flex items-center gap-2"><i class="fas fa-comment-dots text-indigo-500"></i> Category-Specific Messages (override default templates)</h3>
+                <p class="text-xs text-gray-500 mb-2">Customize first-contact & follow-up per category. When messaging a customer, category version will be used if available.</p>
+                <div id="categoryTemplatesEditor" class="space-y-4 max-h-80 overflow-y-auto"></div>
+            </div>
+
+            <!-- Global Templates (fallback) -->
+            <div class="border-t pt-4 mt-4">
+                <h3 class="font-semibold text-gray-700">🌍 Global Templates (fallback)</h3>
+                <div id="templateEditor" class="space-y-3 mt-2"></div>
+            </div>
+
+            <button id="saveSettingsBtn" class="mt-4 w-full bg-indigo-600 text-white py-3 rounded-xl font-medium hover:bg-indigo-700 transition">💾 Save All Settings</button>
         </div>
     </div>
 
+    <!-- Message Modal (uses category-aware messages) -->
     <div id="messageModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
         <div class="bg-white rounded-2xl w-full max-w-lg p-5 modal-transition">
             <div class="flex justify-between items-center mb-3">
-                <h3 class="text-lg font-bold">✉️ Compose Message</h3>
+                <h3 class="text-lg font-bold">✉️ Compose Message (Category-Aware)</h3>
                 <button id="closeMessage" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
             </div>
+            <div class="text-sm text-gray-500 mb-2" id="categoryHint"></div>
             <select id="templateSelect" class="w-full border border-gray-200 rounded-xl p-3 mb-3 bg-white focus:ring-2 focus:ring-indigo-200"></select>
-            <textarea id="messagePreview" rows="4" class="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-indigo-200 outline-none"></textarea>
+            <textarea id="messagePreview" rows="5" class="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-indigo-200 outline-none"></textarea>
             <div class="flex gap-3 mt-4">
                 <button id="copyMsgBtn" class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl hover:bg-gray-200 transition touch-target"><i class="far fa-copy mr-1"></i> Copy</button>
                 <button id="whatsappMsgBtn" class="flex-1 bg-green-100 text-green-700 py-3 rounded-xl hover:bg-green-200 transition touch-target"><i class="fab fa-whatsapp mr-1"></i> WhatsApp</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Edit Customer Modal (includes category) -->
+    <div id="editCustomerModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-2xl w-full max-w-md p-5 modal-transition">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="font-bold">✏️ Edit Customer</h3>
+                <button id="closeEditModal" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <input type="hidden" id="editCustomerId">
+            <input type="text" id="editName" placeholder="Name" class="w-full border border-gray-200 rounded-xl p-3 mb-2">
+            <input type="text" id="editPhone" placeholder="Phone" class="w-full border border-gray-200 rounded-xl p-3 mb-2">
+            <input type="text" id="editNeed" placeholder="Need Type" class="w-full border border-gray-200 rounded-xl p-3 mb-2">
+            <select id="editCategory" class="w-full border border-gray-200 rounded-xl p-3 mb-2 bg-white"></select>
+            <textarea id="editNotes" placeholder="Notes" rows="2" class="w-full border border-gray-200 rounded-xl p-3 mb-3"></textarea>
+            <button id="saveEditBtn" class="w-full bg-indigo-600 text-white py-3 rounded-xl hover:bg-indigo-700 transition">Update Customer</button>
         </div>
     </div>
 
@@ -145,7 +194,7 @@
                 <h3 class="font-bold">📅 Set Follow-up Reminder</h3>
                 <button id="closeFollowup" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
             </div>
-            <input type="datetime-local" id="followupDate" class="w-full border border-gray-200 rounded-xl p-3 my-3 focus:ring-2 focus:ring-indigo-200">
+            <input type="datetime-local" id="followupDate" class="w-full border border-gray-200 rounded-xl p-3 my-3">
             <button id="saveFollowupBtn" class="w-full bg-indigo-600 text-white py-3 rounded-xl hover:bg-indigo-700 transition">Save Reminder</button>
         </div>
     </div>
@@ -171,7 +220,7 @@
 
         let currentUser = null;
         let allCustomers = [];
-        let userSettings = { businessName: "MyBusiness", templates: {} };
+        let userSettings = { businessName: "MyBusiness", templates: {}, categories: ["Restaurant", "Salon", "Cafe", "Retail", "Other"], categoryTemplates: {} };
         let selectedCustomerId = null;
 
         // DOM elements
@@ -183,10 +232,12 @@
         const addCustomerForm = document.getElementById('addCustomerForm');
         const searchInput = document.getElementById('searchInput');
         const statusFilter = document.getElementById('statusFilter');
+        const categoryFilter = document.getElementById('categoryFilter');
         const followupFilter = document.getElementById('followupFilter');
         const sortSelect = document.getElementById('sortSelect');
         const settingsModal = document.getElementById('settingsModal');
         const templateEditor = document.getElementById('templateEditor');
+        const categoryTemplatesEditor = document.getElementById('categoryTemplatesEditor');
         const businessNameInput = document.getElementById('businessNameInput');
         const saveSettingsBtn = document.getElementById('saveSettingsBtn');
         const messageModal = document.getElementById('messageModal');
@@ -197,43 +248,112 @@
         const followupModal = document.getElementById('followupModal');
         const followupDateInput = document.getElementById('followupDate');
         const saveFollowupBtn = document.getElementById('saveFollowupBtn');
+        const editModal = document.getElementById('editCustomerModal');
+        const editName = document.getElementById('editName');
+        const editPhone = document.getElementById('editPhone');
+        const editNeed = document.getElementById('editNeed');
+        const editCategory = document.getElementById('editCategory');
+        const editNotes = document.getElementById('editNotes');
+        const saveEditBtn = document.getElementById('saveEditBtn');
+        const closeEditModal = document.getElementById('closeEditModal');
 
         const DEFAULT_TEMPLATES = {
-            first_contact: "Hi {{customerName}}, I noticed you might need {{needType}}. We at {{businessName}} can help you with that! Let me know if you'd like more info.",
+            first_contact: "Hi {{customerName}}, I noticed you might need {{needType}}. We at {{businessName}} can help! Let me know if you'd like more info.",
             follow_up: "Hi {{customerName}}, just following up regarding {{needType}}. Still interested? Happy to help!",
             reminder: "Reminder: {{customerName}}, we discussed {{needType}}. Let's connect soon!",
             reply_confirmation: "Thanks {{customerName}}! Glad to hear from you. We'll move forward with {{needType}}.",
             cancellation: "Hi {{customerName}}, sorry to hear you're not interested in {{needType}}. If anything changes, feel free to reach out."
         };
 
-        // ---------- Helper functions ----------
+        // Helper: load settings with categories support
         async function loadUserSettings(userId) {
             const settingsRef = doc(db, "userSettings", userId);
             const snap = await getDoc(settingsRef);
             if (snap.exists()) {
                 userSettings = snap.data();
+                if (!userSettings.categories) userSettings.categories = ["Restaurant", "Salon", "Cafe", "Retail", "Other"];
+                if (!userSettings.categoryTemplates) userSettings.categoryTemplates = {};
+                if (!userSettings.templates) userSettings.templates = DEFAULT_TEMPLATES;
             } else {
-                userSettings = { businessName: "MyBusiness", templates: DEFAULT_TEMPLATES };
+                userSettings = { 
+                    businessName: "MyBusiness", 
+                    templates: DEFAULT_TEMPLATES, 
+                    categories: ["Restaurant", "Salon", "Cafe", "Retail", "Other"],
+                    categoryTemplates: {}
+                };
                 await setDoc(settingsRef, userSettings);
             }
             businessNameInput.value = userSettings.businessName;
             renderTemplateEditor();
+            renderCategoryManagement();
+            renderCategoryTemplateEditors();
+            populateCategorySelectors();
         }
 
-        async function saveUserSettings() {
-            if (!currentUser) return;
-            const newBusinessName = businessNameInput.value.trim() || "MyBusiness";
-            const templates = {};
-            document.querySelectorAll('.template-edit').forEach(textarea => {
-                const key = textarea.dataset.templateKey;
-                templates[key] = textarea.value;
+        function renderCategoryManagement() {
+            const container = document.getElementById('categoriesListContainer');
+            container.innerHTML = userSettings.categories.map(cat => `
+                <span class="inline-flex items-center gap-1 bg-gray-100 rounded-full px-3 py-1 text-sm">
+                    ${cat} <button class="text-red-500 hover:text-red-700 remove-category-btn" data-category="${cat}"><i class="fas fa-times-circle"></i></button>
+                </span>
+            `).join('');
+            document.querySelectorAll('.remove-category-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const cat = btn.dataset.category;
+                    if (userSettings.categories.length <= 1) { alert("At least one category required"); return; }
+                    userSettings.categories = userSettings.categories.filter(c => c !== cat);
+                    delete userSettings.categoryTemplates[cat];
+                    renderCategoryManagement();
+                    renderCategoryTemplateEditors();
+                    populateCategorySelectors();
+                });
             });
-            userSettings.businessName = newBusinessName;
-            userSettings.templates = templates;
-            const settingsRef = doc(db, "userSettings", currentUser.uid);
-            await setDoc(settingsRef, userSettings);
-            alert("Settings saved!");
-            renderTemplateEditor();
+        }
+
+        function populateCategorySelectors() {
+            const custCategorySelect = document.getElementById('custCategory');
+            const editCatSelect = document.getElementById('editCategory');
+            const filterCatSelect = document.getElementById('categoryFilter');
+            const options = userSettings.categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+            if (custCategorySelect) custCategorySelect.innerHTML = options;
+            if (editCatSelect) editCatSelect.innerHTML = options;
+            if (filterCatSelect) {
+                const currentVal = filterCatSelect.value;
+                filterCatSelect.innerHTML = '<option value="">All Categories</option>' + options;
+                if (currentVal) filterCatSelect.value = currentVal;
+            }
+        }
+
+        function renderCategoryTemplateEditors() {
+            categoryTemplatesEditor.innerHTML = '';
+            for (let cat of userSettings.categories) {
+                const catTemplates = userSettings.categoryTemplates[cat] || { first_contact: "", follow_up: "" };
+                const div = document.createElement('div');
+                div.className = 'border rounded-xl p-3 bg-gray-50';
+                div.innerHTML = `
+                    <h4 class="font-medium text-indigo-800">🏷️ ${cat}</h4>
+                    <label class="text-xs block mt-2">First Contact Message (category specific)</label>
+                    <textarea rows="2" class="w-full border rounded-lg p-2 text-sm cat-first-contact" data-cat="${cat}" data-type="first_contact">${escapeHtml(catTemplates.first_contact || '')}</textarea>
+                    <label class="text-xs block mt-2">Follow-up Message (category specific)</label>
+                    <textarea rows="2" class="w-full border rounded-lg p-2 text-sm cat-follow-up" data-cat="${cat}" data-type="follow_up">${escapeHtml(catTemplates.follow_up || '')}</textarea>
+                `;
+                categoryTemplatesEditor.appendChild(div);
+            }
+        }
+
+        function collectCategoryTemplatesFromUI() {
+            const newCatTemplates = {};
+            document.querySelectorAll('.cat-first-contact').forEach(ta => {
+                const cat = ta.dataset.cat;
+                if (!newCatTemplates[cat]) newCatTemplates[cat] = {};
+                newCatTemplates[cat].first_contact = ta.value;
+            });
+            document.querySelectorAll('.cat-follow-up').forEach(ta => {
+                const cat = ta.dataset.cat;
+                if (!newCatTemplates[cat]) newCatTemplates[cat] = {};
+                newCatTemplates[cat].follow_up = ta.value;
+            });
+            return newCatTemplates;
         }
 
         function renderTemplateEditor() {
@@ -247,14 +367,32 @@
                 label.innerText = key.replace(/_/g, ' ');
                 const textarea = document.createElement('textarea');
                 textarea.rows = 2;
-                textarea.className = 'w-full border border-gray-200 rounded-xl p-2 text-sm focus:ring-2 focus:ring-indigo-200 outline-none';
+                textarea.className = 'w-full border border-gray-200 rounded-xl p-2 text-sm';
                 textarea.value = userSettings.templates[key] || DEFAULT_TEMPLATES[key] || '';
                 textarea.dataset.templateKey = key;
-                textarea.classList.add('template-edit');
+                textarea.classList.add('global-template-edit');
                 div.appendChild(label);
                 div.appendChild(textarea);
                 templateEditor.appendChild(div);
             });
+        }
+
+        async function saveUserSettings() {
+            if (!currentUser) return;
+            const newBusinessName = businessNameInput.value.trim() || "MyBusiness";
+            const globalTemplates = {};
+            document.querySelectorAll('.global-template-edit').forEach(ta => {
+                globalTemplates[ta.dataset.templateKey] = ta.value;
+            });
+            const newCatTemplates = collectCategoryTemplatesFromUI();
+            userSettings.businessName = newBusinessName;
+            userSettings.templates = globalTemplates;
+            userSettings.categoryTemplates = newCatTemplates;
+            const settingsRef = doc(db, "userSettings", currentUser.uid);
+            await setDoc(settingsRef, userSettings);
+            alert("Settings + Category messages saved!");
+            populateCategorySelectors();
+            renderCategoryManagement();
         }
 
         async function fetchCustomers() {
@@ -262,21 +400,19 @@
             const q = query(collection(db, "customers"), where("ownerId", "==", currentUser.uid));
             const snap = await getDocs(q);
             allCustomers = [];
-            snap.forEach(docSnap => {
-                allCustomers.push({ id: docSnap.id, ...docSnap.data() });
-            });
+            snap.forEach(docSnap => { allCustomers.push({ id: docSnap.id, ...docSnap.data() }); });
             return allCustomers;
         }
 
-        function computeStats(customers) {
+        function computeStats(customers) { /* unchanged */ 
             const total = customers.length;
             const messagesSent = customers.filter(c => c.status === "Message Sent" || (c.lastMessageAt)).length;
             const today = new Date(); today.setHours(0,0,0,0);
             const dueToday = customers.filter(c => {
                 if (!c.nextFollowUpAt) return false;
-                const followDate = c.nextFollowUpAt.toDate ? c.nextFollowUpAt.toDate() : new Date(c.nextFollowUpAt);
-                followDate.setHours(0,0,0,0);
-                return followDate.getTime() === today.getTime() && c.status !== "Removed" && c.status !== "Lost" && c.status !== "Won";
+                const fd = c.nextFollowUpAt.toDate ? c.nextFollowUpAt.toDate() : new Date(c.nextFollowUpAt);
+                fd.setHours(0,0,0,0);
+                return fd.getTime() === today.getTime() && c.status !== "Removed" && c.status !== "Lost" && c.status !== "Won";
             }).length;
             const replied = customers.filter(c => c.status === "Replied").length;
             const cancelled = customers.filter(c => c.status === "Lost" || c.status === "Removed").length;
@@ -298,305 +434,112 @@
             let filtered = [...allCustomers];
             const searchTerm = searchInput.value.toLowerCase();
             if (searchTerm) filtered = filtered.filter(c => c.name?.toLowerCase().includes(searchTerm) || c.phone?.includes(searchTerm));
-            const statusVal = statusFilter.value;
-            if (statusVal) filtered = filtered.filter(c => c.status === statusVal);
+            if (statusFilter.value) filtered = filtered.filter(c => c.status === statusFilter.value);
+            if (categoryFilter.value) filtered = filtered.filter(c => c.category === categoryFilter.value);
             const followVal = followupFilter.value;
+            const today = new Date(); today.setHours(0,0,0,0);
             if (followVal === "today") {
-                const today = new Date(); today.setHours(0,0,0,0);
-                filtered = filtered.filter(c => {
-                    if (!c.nextFollowUpAt) return false;
-                    const fd = c.nextFollowUpAt.toDate ? c.nextFollowUpAt.toDate() : new Date(c.nextFollowUpAt);
-                    fd.setHours(0,0,0,0);
-                    return fd.getTime() === today.getTime();
-                });
+                filtered = filtered.filter(c => { if (!c.nextFollowUpAt) return false; const fd = c.nextFollowUpAt.toDate ? c.nextFollowUpAt.toDate() : new Date(c.nextFollowUpAt); fd.setHours(0,0,0,0); return fd.getTime() === today.getTime(); });
             } else if (followVal === "overdue") {
-                const today = new Date(); today.setHours(0,0,0,0);
-                filtered = filtered.filter(c => {
-                    if (!c.nextFollowUpAt) return false;
-                    const fd = c.nextFollowUpAt.toDate ? c.nextFollowUpAt.toDate() : new Date(c.nextFollowUpAt);
-                    return fd < today && c.status !== "Removed" && c.status !== "Lost" && c.status !== "Won";
-                });
+                filtered = filtered.filter(c => { if (!c.nextFollowUpAt) return false; const fd = c.nextFollowUpAt.toDate ? c.nextFollowUpAt.toDate() : new Date(c.nextFollowUpAt); return fd < today && c.status !== "Removed" && c.status !== "Lost" && c.status !== "Won"; });
             } else if (followVal === "upcoming") {
-                const today = new Date(); today.setHours(0,0,0,0);
-                filtered = filtered.filter(c => {
-                    if (!c.nextFollowUpAt) return false;
-                    const fd = c.nextFollowUpAt.toDate ? c.nextFollowUpAt.toDate() : new Date(c.nextFollowUpAt);
-                    return fd > today;
-                });
+                filtered = filtered.filter(c => { if (!c.nextFollowUpAt) return false; const fd = c.nextFollowUpAt.toDate ? c.nextFollowUpAt.toDate() : new Date(c.nextFollowUpAt); return fd > today; });
             }
-            const sortBy = sortSelect.value;
-            if (sortBy === "newest") filtered.sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
-            else if (sortBy === "oldest") filtered.sort((a,b) => (a.createdAt?.seconds||0) - (b.createdAt?.seconds||0));
-            else if (sortBy === "pending") filtered.sort((a,b) => ((a.nextFollowUpAt?.seconds||Infinity) - (b.nextFollowUpAt?.seconds||Infinity)));
+            if (sortSelect.value === "newest") filtered.sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
+            else if (sortSelect.value === "oldest") filtered.sort((a,b) => (a.createdAt?.seconds||0) - (b.createdAt?.seconds||0));
+            else if (sortSelect.value === "pending") filtered.sort((a,b) => ((a.nextFollowUpAt?.seconds||Infinity) - (b.nextFollowUpAt?.seconds||Infinity)));
             return filtered;
+        }
+
+        function getCategoryAwareMessage(cust, templateKey) {
+            const globalTemplate = userSettings.templates[templateKey] || DEFAULT_TEMPLATES[templateKey] || "";
+            const categorySpecific = userSettings.categoryTemplates?.[cust.category]?.[templateKey];
+            let finalTemplate = (categorySpecific && categorySpecific.trim()) ? categorySpecific : globalTemplate;
+            return finalTemplate.replace(/{{customerName}}/g, cust.name).replace(/{{needType}}/g, cust.needType || "services").replace(/{{businessName}}/g, userSettings.businessName).replace(/{{category}}/g, cust.category || "client");
         }
 
         function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
 
-        function formatDate(timestamp) {
-            if (!timestamp) return '—';
-            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-            return date.toLocaleDateString();
-        }
-
         function renderCustomerList() {
             const filtered = filterAndSortCustomers();
-            if (filtered.length === 0) {
-                customerListDiv.innerHTML = '<div class="bg-white rounded-xl p-8 text-center text-gray-400">✨ No customers yet. Add your first customer above!</div>';
-                renderDashboard(allCustomers);
-                return;
-            }
-
+            if (!filtered.length) { customerListDiv.innerHTML = '<div class="bg-white rounded-xl p-8 text-center text-gray-400">✨ No customers yet.</div>'; renderDashboard(allCustomers); return; }
             customerListDiv.innerHTML = filtered.map(cust => {
-                const statusBadgeClass = {
-                    'New': 'bg-gray-100 text-gray-700',
-                    'Message Sent': 'bg-blue-100 text-blue-700',
-                    'Follow-up Needed': 'bg-yellow-100 text-yellow-700',
-                    'Replied': 'bg-green-100 text-green-700',
-                    'Won': 'bg-emerald-100 text-emerald-700',
-                    'Lost': 'bg-red-100 text-red-700',
-                    'Removed': 'bg-gray-100 text-gray-500'
-                }[cust.status] || 'bg-gray-100';
-
-                const lastContact = cust.lastMessageAt ? (cust.lastMessageAt.toDate ? cust.lastMessageAt.toDate().toLocaleString() : new Date(cust.lastMessageAt).toLocaleString()) : '—';
-                const nextFollow = cust.nextFollowUpAt ? formatDate(cust.nextFollowUpAt) : '—';
-
-                return `
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                        <!-- Compact header -->
-                        <div class="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition" onclick="toggleExpand('${cust.id}')">
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center gap-2">
-                                    <span class="font-semibold text-gray-800">${escapeHtml(cust.name)}</span>
-                                    <span class="text-xs px-2 py-0.5 rounded-full ${statusBadgeClass}">${cust.status}</span>
-                                </div>
-                                <div class="text-sm text-gray-500 mt-0.5">${escapeHtml(cust.phone)}</div>
-                                <div class="text-xs text-gray-400 mt-1">📅 Next: ${nextFollow}</div>
-                            </div>
-                            <i class="fas fa-chevron-down text-gray-400 transition-transform duration-200" id="chevron-${cust.id}"></i>
-                        </div>
-                        <!-- Expandable detail section (hidden by default) -->
-                        <div id="expand-${cust.id}" class="hidden border-t border-gray-100 p-4 space-y-3 bg-gray-50">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                                <div><span class="font-medium">Need:</span> ${escapeHtml(cust.needType || '—')}</div>
-                                <div><span class="font-medium">Last contact:</span> ${lastContact}</div>
-                                <div class="sm:col-span-2"><span class="font-medium">Notes:</span> ${escapeHtml(cust.notes || '—')}</div>
-                            </div>
-                            <div class="flex flex-wrap gap-2 pt-2">
-                                <button class="bg-indigo-50 text-indigo-600 px-3 py-2 rounded-full text-sm hover:bg-indigo-100 transition touch-target" onclick="window.openMessageModal('${cust.id}')"><i class="fas fa-comment-dots mr-1"></i> Message</button>
-                                <button class="bg-orange-50 text-orange-600 px-3 py-2 rounded-full text-sm hover:bg-orange-100 transition touch-target" onclick="window.openFollowupModal('${cust.id}', '${cust.nextFollowUpAt ? (cust.nextFollowUpAt.toDate ? cust.nextFollowUpAt.toDate().toISOString().slice(0,16) : '') : ''}')"><i class="fas fa-calendar-alt mr-1"></i> Follow-up</button>
-                                <button class="bg-purple-50 text-purple-600 px-3 py-2 rounded-full text-sm hover:bg-purple-100 transition touch-target" onclick="window.markStatus('${cust.id}', 'Replied')"><i class="fas fa-reply-all mr-1"></i> Replied</button>
-                                <button class="bg-emerald-50 text-emerald-600 px-3 py-2 rounded-full text-sm hover:bg-emerald-100 transition touch-target" onclick="window.markStatus('${cust.id}', 'Won')"><i class="fas fa-trophy mr-1"></i> Won</button>
-                                <button class="bg-red-50 text-red-600 px-3 py-2 rounded-full text-sm hover:bg-red-100 transition touch-target" onclick="window.markStatus('${cust.id}', 'Lost')"><i class="fas fa-ban mr-1"></i> Lost</button>
-                                <button class="bg-gray-50 text-gray-600 px-3 py-2 rounded-full text-sm hover:bg-gray-100 transition touch-target" onclick="window.markStatus('${cust.id}', 'Removed')"><i class="fas fa-trash-alt mr-1"></i> Remove</button>
-                                <button class="bg-rose-50 text-rose-600 px-3 py-2 rounded-full text-sm hover:bg-rose-100 transition touch-target" onclick="window.editCustomer('${cust.id}')"><i class="fas fa-edit mr-1"></i> Edit</button>
-                                <button class="bg-red-100 text-red-700 px-3 py-2 rounded-full text-sm hover:bg-red-200 transition touch-target" onclick="window.permanentDelete('${cust.id}')"><i class="fas fa-skull-crossbones mr-1"></i> Delete Permanently</button>
-                            </div>
+                const statusBadge = { 'New':'bg-gray-100','Message Sent':'bg-blue-100','Follow-up Needed':'bg-yellow-100','Replied':'bg-green-100','Won':'bg-emerald-100','Lost':'bg-red-100','Removed':'bg-gray-100' }[cust.status] || 'bg-gray-100';
+                const nextFollow = cust.nextFollowUpAt ? (cust.nextFollowUpAt.toDate ? cust.nextFollowUpAt.toDate().toLocaleDateString() : '—') : '—';
+                return `<div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50" onclick="toggleExpand('${cust.id}')">
+                        <div><div class="font-semibold">${escapeHtml(cust.name)} <span class="text-xs px-2 py-0.5 rounded-full ${statusBadge}">${cust.status}</span></div>
+                        <div class="text-sm text-gray-500">${escapeHtml(cust.phone)} • 🏷️ ${escapeHtml(cust.category || 'Uncategorized')}</div>
+                        <div class="text-xs text-gray-400">📅 Next: ${nextFollow}</div></div>
+                        <i class="fas fa-chevron-down text-gray-400 transition" id="chevron-${cust.id}"></i>
+                    </div>
+                    <div id="expand-${cust.id}" class="hidden border-t p-4 bg-gray-50 space-y-3">
+                        <div><span class="font-medium">Need:</span> ${escapeHtml(cust.needType)}</div>
+                        <div><span class="font-medium">Notes:</span> ${escapeHtml(cust.notes || '—')}</div>
+                        <div class="flex flex-wrap gap-2">
+                            <button class="bg-indigo-50 text-indigo-600 px-3 py-2 rounded-full text-sm" onclick="window.openMessageModal('${cust.id}')"><i class="fas fa-comment-dots"></i> Message</button>
+                            <button class="bg-orange-50 text-orange-600 px-3 py-2 rounded-full text-sm" onclick="window.openFollowupModal('${cust.id}','')">📅 Follow-up</button>
+                            <button class="bg-purple-50 text-purple-600 px-3 py-2 rounded-full text-sm" onclick="window.markStatus('${cust.id}', 'Replied')">💬 Replied</button>
+                            <button class="bg-emerald-50 text-emerald-600 px-3 py-2 rounded-full text-sm" onclick="window.markStatus('${cust.id}', 'Won')">🏆 Won</button>
+                            <button class="bg-rose-50 text-rose-600 px-3 py-2 rounded-full text-sm" onclick="window.editCustomerModalOpen('${cust.id}')">✏️ Edit</button>
+                            <button class="bg-red-100 text-red-700 px-3 py-2 rounded-full text-sm" onclick="window.permanentDelete('${cust.id}')">🗑️ Delete</button>
                         </div>
                     </div>
-                `;
+                </div>`;
             }).join('');
             renderDashboard(allCustomers);
         }
 
-        // Toggle expand/collapse
-        window.toggleExpand = (id) => {
-            const expandDiv = document.getElementById(`expand-${id}`);
-            const chevron = document.getElementById(`chevron-${id}`);
-            if (expandDiv.classList.contains('hidden')) {
-                expandDiv.classList.remove('hidden');
-                chevron.classList.add('fa-chevron-up');
-                chevron.classList.remove('fa-chevron-down');
-            } else {
-                expandDiv.classList.add('hidden');
-                chevron.classList.add('fa-chevron-down');
-                chevron.classList.remove('fa-chevron-up');
-            }
-        };
-
-        // CRUD functions
-        async function addCustomer(event) {
-            event.preventDefault();
-            if(!currentUser) return;
-            const name = document.getElementById('custName').value.trim();
-            const phone = document.getElementById('custPhone').value.trim();
-            const needType = document.getElementById('custNeed').value;
-            const notes = document.getElementById('custNotes').value;
-            const status = document.getElementById('custStatus').value;
-            if(!name || !phone) { alert("Name and Phone are required"); return; }
-            const newCustomer = {
-                name, phone, needType, notes, status,
-                ownerId: currentUser.uid,
-                createdAt: Timestamp.now(),
-                updatedAt: Timestamp.now(),
-                lastMessageAt: null,
-                nextFollowUpAt: null,
-                messageTemplateUsed: null,
-                deletedOrRemovedFlag: status === "Removed"
-            };
-            await addDoc(collection(db, "customers"), newCustomer);
-            document.getElementById('addCustomerForm').reset();
-            await refreshUI();
+        window.toggleExpand = (id) => { const div = document.getElementById(`expand-${id}`); const chev = document.getElementById(`chevron-${id}`); if(div.classList.contains('hidden')){ div.classList.remove('hidden'); chev.classList.add('fa-chevron-up'); chev.classList.remove('fa-chevron-down'); } else { div.classList.add('hidden'); chev.classList.add('fa-chevron-down'); chev.classList.remove('fa-chevron-up'); } };
+        async function addCustomer(e) {
+            e.preventDefault(); const name = document.getElementById('custName').value.trim(); const phone = document.getElementById('custPhone').value.trim();
+            if(!name||!phone) return alert("Name & Phone required");
+            const category = document.getElementById('custCategory').value;
+            await addDoc(collection(db,"customers"), { name, phone, needType:document.getElementById('custNeed').value, category, notes:document.getElementById('custNotes').value, status:document.getElementById('custStatus').value, ownerId:currentUser.uid, createdAt:Timestamp.now(), updatedAt:Timestamp.now(), lastMessageAt:null, nextFollowUpAt:null });
+            document.getElementById('addCustomerForm').reset(); await refreshUI();
         }
+        async function markStatus(id,status){ await updateDoc(doc(db,"customers",id),{status, updatedAt:Timestamp.now()}); await refreshUI(); }
+        async function permanentDelete(id){ if(confirm("Permanent delete?")){ await deleteDoc(doc(db,"customers",id)); await refreshUI(); } }
+        async function setFollowup(id,dateISO){ await updateDoc(doc(db,"customers",id),{ nextFollowUpAt:Timestamp.fromDate(new Date(dateISO)), status:"Follow-up Needed", updatedAt:Timestamp.now() }); await refreshUI(); }
+        async function logMessage(customerId,text,channel){ await addDoc(collection(db,"messageLogs"),{ customerId, messageText:text, sentAt:Timestamp.now(), channel, ownerId:currentUser.uid }); await updateDoc(doc(db,"customers",customerId),{ lastMessageAt:Timestamp.now(), status:"Message Sent" }); }
+        async function openMessageModal(custId){ const cust = allCustomers.find(c=>c.id===custId); if(!cust) return; selectedCustomerId=custId; document.getElementById('categoryHint').innerHTML = `🏷️ Category: <strong>${cust.category || 'General'}</strong> — using category-specific messages if defined.`; const keys = ['first_contact','follow_up','reminder','reply_confirmation','cancellation']; templateSelect.innerHTML = keys.map(k=>`<option value="${k}">${k.replace(/_/g,' ').toUpperCase()}</option>`).join(''); const updateMsg=()=>{ const msg=getCategoryAwareMessage(cust, templateSelect.value); messagePreview.value=msg; }; templateSelect.onchange=updateMsg; updateMsg(); messageModal.classList.remove('hidden'); }
+        async function sendMsg(channel){ if(!selectedCustomerId) return; const cust=allCustomers.find(c=>c.id===selectedCustomerId); const msg=messagePreview.value; if(!msg) return; if(channel==='copy'){ await navigator.clipboard.writeText(msg); alert("Copied!"); await logMessage(selectedCustomerId,msg,"Copy"); } else if(channel==='whatsapp'){ let phone=cust.phone.replace(/\D/g,''); if(!phone.startsWith('+')) phone='91'+phone; window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`,'_blank'); await logMessage(selectedCustomerId,msg,"WhatsApp"); } await refreshUI(); messageModal.classList.add('hidden'); }
+        function openFollowupModal(custId,val){ selectedCustomerId=custId; const dt=new Date(); dt.setDate(dt.getDate()+1); followupDateInput.value=val?val.slice(0,16):dt.toISOString().slice(0,16); followupModal.classList.remove('hidden'); }
+        async function saveFollowup(){ if(followupDateInput.value){ await setFollowup(selectedCustomerId, followupDateInput.value); followupModal.classList.add('hidden'); } }
+        async function editCustomerModalOpen(id){ const cust=allCustomers.find(c=>c.id===id); if(!cust) return; document.getElementById('editCustomerId').value=id; editName.value=cust.name; editPhone.value=cust.phone; editNeed.value=cust.needType||''; editNotes.value=cust.notes||''; populateCategorySelectors(); editCategory.value=cust.category||userSettings.categories[0]; editModal.classList.remove('hidden'); }
+        async function saveCustomerEdit(){ const id=document.getElementById('editCustomerId').value; await updateDoc(doc(db,"customers",id),{ name:editName.value, phone:editPhone.value, needType:editNeed.value, category:editCategory.value, notes:editNotes.value, updatedAt:Timestamp.now() }); editModal.classList.add('hidden'); await refreshUI(); }
+        async function refreshUI(){ await fetchCustomers(); renderCustomerList(); }
 
-        async function editCustomerById(id) {
-            const cust = allCustomers.find(c => c.id === id);
-            if(!cust) return;
-            const newName = prompt("Edit name:", cust.name);
-            if(newName !== null) {
-                const newPhone = prompt("Edit phone:", cust.phone);
-                const newNeed = prompt("Edit need type:", cust.needType);
-                const newNotes = prompt("Edit notes:", cust.notes);
-                await updateDoc(doc(db, "customers", id), {
-                    name: newName || cust.name,
-                    phone: newPhone || cust.phone,
-                    needType: newNeed || cust.needType,
-                    notes: newNotes || cust.notes,
-                    updatedAt: Timestamp.now()
-                });
-                await refreshUI();
-            }
-        }
-
-        async function markStatus(id, newStatus) {
-            const validStatuses = ["New", "Message Sent", "Follow-up Needed", "Replied", "Won", "Lost", "Removed"];
-            if(!validStatuses.includes(newStatus)) return;
-            await updateDoc(doc(db, "customers", id), { status: newStatus, updatedAt: Timestamp.now() });
-            await refreshUI();
-        }
-
-        async function permanentDelete(id) {
-            if(confirm("⚠️ Permanent Delete: This action cannot be undone. Delete customer and all logs?")) {
-                await deleteDoc(doc(db, "customers", id));
-                await refreshUI();
-            }
-        }
-
-        async function setFollowup(id, followupDateISO) {
-            if(!followupDateISO) return;
-            const followTimestamp = Timestamp.fromDate(new Date(followupDateISO));
-            await updateDoc(doc(db, "customers", id), { nextFollowUpAt: followTimestamp, updatedAt: Timestamp.now(), status: "Follow-up Needed" });
-            await addDoc(collection(db, "followUps"), { customerId: id, followUpDate: followTimestamp, followUpStatus: "pending", notes: "", ownerId: currentUser.uid, createdAt: Timestamp.now() });
-            await refreshUI();
-        }
-
-        async function logMessage(customerId, messageText, channel) {
-            await addDoc(collection(db, "messageLogs"), {
-                customerId, messageText, sentAt: Timestamp.now(), channel,
-                ownerId: currentUser.uid
-            });
-            await updateDoc(doc(db, "customers", customerId), { lastMessageAt: Timestamp.now(), updatedAt: Timestamp.now(), status: "Message Sent" });
-        }
-
-        function getMessageFromTemplate(cust, templateKey) {
-            let templateText = (userSettings.templates && userSettings.templates[templateKey]) || DEFAULT_TEMPLATES[templateKey] || "Hello {{customerName}}, regarding {{needType}}.";
-            return templateText
-                .replace(/{{customerName}}/g, cust.name)
-                .replace(/{{needType}}/g, cust.needType || "our services")
-                .replace(/{{businessName}}/g, userSettings.businessName);
-        }
-
-        async function openMessageModal(custId) {
-            const cust = allCustomers.find(c => c.id === custId);
-            if(!cust) return;
-            selectedCustomerId = custId;
-            const templateKeys = Object.keys(userSettings.templates || DEFAULT_TEMPLATES);
-            templateSelect.innerHTML = templateKeys.map(key => `<option value="${key}">${key.replace(/_/g, ' ').toUpperCase()}</option>`).join('');
-            templateSelect.onchange = () => {
-                const msg = getMessageFromTemplate(cust, templateSelect.value);
-                messagePreview.value = msg;
-            };
-            const firstMsg = getMessageFromTemplate(cust, templateSelect.value);
-            messagePreview.value = firstMsg;
-            messageModal.classList.remove('hidden');
-        }
-
-        async function sendMessageAction(channelType) {
-            if(!selectedCustomerId) return;
-            const cust = allCustomers.find(c => c.id === selectedCustomerId);
-            const finalMessage = messagePreview.value;
-            if(!finalMessage) return;
-            if(channelType === 'copy') {
-                await navigator.clipboard.writeText(finalMessage);
-                alert("Message copied to clipboard!");
-                await logMessage(selectedCustomerId, finalMessage, "Copy");
-            } else if(channelType === 'whatsapp') {
-                let phone = cust.phone.replace(/\D/g, '');
-                if(!phone.startsWith('+')) phone = '91' + phone;
-                const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(finalMessage)}`;
-                window.open(waUrl, '_blank');
-                await logMessage(selectedCustomerId, finalMessage, "WhatsApp");
-            }
-            await updateDoc(doc(db, "customers", selectedCustomerId), { messageTemplateUsed: templateSelect.value });
-            await refreshUI();
-            messageModal.classList.add('hidden');
-        }
-
-        function openFollowupModal(custId, currentDate) {
-            selectedCustomerId = custId;
-            if(currentDate) {
-                let val = currentDate;
-                if(val.includes('T')) val = val.slice(0,16);
-                followupDateInput.value = val;
-            } else {
-                const now = new Date();
-                now.setDate(now.getDate() + 1);
-                followupDateInput.value = now.toISOString().slice(0,16);
-            }
-            followupModal.classList.remove('hidden');
-        }
-
-        async function saveFollowup() {
-            const dateValue = followupDateInput.value;
-            if(!dateValue) return;
-            await setFollowup(selectedCustomerId, dateValue);
-            followupModal.classList.add('hidden');
-        }
-
-        async function refreshUI() {
-            await fetchCustomers();
-            renderCustomerList();
-        }
-
-        async function logout() {
-            await signOut(auth);
-            window.location.href = 'login.html';
-        }
-
-        // Event listeners
-        addCustomerForm.addEventListener('submit', addCustomer);
-        logoutBtn.addEventListener('click', logout);
-        saveSettingsBtn.addEventListener('click', saveUserSettings);
-        copyMsgBtn.addEventListener('click', () => sendMessageAction('copy'));
-        whatsappMsgBtn.addEventListener('click', () => sendMessageAction('whatsapp'));
-        saveFollowupBtn.addEventListener('click', saveFollowup);
-        document.getElementById('closeSettings').addEventListener('click', () => settingsModal.classList.add('hidden'));
-        document.getElementById('closeMessage').addEventListener('click', () => messageModal.classList.add('hidden'));
-        document.getElementById('closeFollowup').addEventListener('click', () => followupModal.classList.add('hidden'));
-        document.getElementById('settingsCog').addEventListener('click', () => { renderTemplateEditor(); settingsModal.classList.remove('hidden'); });
-        searchInput.addEventListener('input', renderCustomerList);
-        statusFilter.addEventListener('change', renderCustomerList);
-        followupFilter.addEventListener('change', renderCustomerList);
-        sortSelect.addEventListener('change', renderCustomerList);
-
-        window.editCustomer = editCustomerById;
-        window.openMessageModal = openMessageModal;
-        window.openFollowupModal = openFollowupModal;
-        window.markStatus = markStatus;
-        window.permanentDelete = permanentDelete;
+        addCustomerForm.addEventListener('submit',addCustomer); logoutBtn.addEventListener('click',()=>signOut(auth)); saveSettingsBtn.addEventListener('click',saveUserSettings); copyMsgBtn.addEventListener('click',()=>sendMsg('copy')); whatsappMsgBtn.addEventListener('click',()=>sendMsg('whatsapp')); saveFollowupBtn.addEventListener('click',saveFollowup); saveEditBtn.addEventListener('click',saveCustomerEdit); closeEditModal.addEventListener('click',()=>editModal.classList.add('hidden')); document.getElementById('closeSettings').onclick=()=>settingsModal.classList.add('hidden'); document.getElementById('closeMessage').onclick=()=>messageModal.classList.add('hidden'); document.getElementById('closeFollowup').onclick=()=>followupModal.classList.add('hidden'); document.getElementById('settingsCog').onclick=()=>{ renderTemplateEditor(); renderCategoryTemplateEditors(); renderCategoryManagement(); settingsModal.classList.remove('hidden'); }; searchInput.addEventListener('input',renderCustomerList); statusFilter.addEventListener('change',renderCustomerList); categoryFilter.addEventListener('change',renderCustomerList); followupFilter.addEventListener('change',renderCustomerList); sortSelect.addEventListener('change',renderCustomerList); document.getElementById('addCategoryBtn').addEventListener('click',()=>{ const newCat=document.getElementById('newCategoryName').value.trim(); if(newCat && !userSettings.categories.includes(newCat)){ userSettings.categories.push(newCat); userSettings.categoryTemplates[newCat]={first_contact:"", follow_up:""}; renderCategoryManagement(); renderCategoryTemplateEditors(); populateCategorySelectors(); document.getElementById('newCategoryName').value=''; }else alert("Invalid or duplicate category"); });
+        window.editCustomerModalOpen=editCustomerModalOpen; window.openMessageModal=openMessageModal; window.openFollowupModal=openFollowupModal; window.markStatus=markStatus; window.permanentDelete=permanentDelete;
 
         onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                currentUser = user;
-                await loadUserSettings(user.uid);
-                await fetchCustomers();
-                renderCustomerList();
-                loadingDiv.classList.add('hidden');
-                appContainer.classList.remove('hidden');
-            } else {
-                window.location.href = 'login.html';
-            }
+            if(user){ currentUser=user; await loadUserSettings(user.uid); await fetchCustomers(); renderCustomerList(); loadingDiv.classList.add('hidden'); appContainer.classList.remove('hidden'); }
+            else window.location.href='login.html';
         });
     </script>
+    <!-- Firestore Security Rules (copy into Firebase Console) -->
+    <!--
+    rules_version = '2';
+    service cloud.firestore {
+      match /databases/{database}/documents {
+        match /customers/{document} {
+          allow read, write: if request.auth != null && request.auth.uid == resource.data.ownerId;
+          allow create: if request.auth != null && request.auth.uid == request.resource.data.ownerId;
+        }
+        match /userSettings/{userId} {
+          allow read, write: if request.auth != null && request.auth.uid == userId;
+        }
+        match /messageLogs/{doc} {
+          allow read, write: if request.auth != null && request.auth.uid == resource.data.ownerId;
+          allow create: if request.auth != null && request.auth.uid == request.resource.data.ownerId;
+        }
+        match /followUps/{doc} {
+          allow read, write: if request.auth != null && request.auth.uid == resource.data.ownerId;
+          allow create: if request.auth != null && request.auth.uid == request.resource.data.ownerId;
+        }
+      }
+    }
+    -->
 </body>
 </html>
